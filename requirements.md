@@ -64,8 +64,9 @@ here The players can start playing with other players.
 #### There are two modes in this page
 #### Mode one
 When the user first opens the page, he sees a button to select the color.
-He needs to click on his group's color and only then can he continue.
-The group/color cannot be changed after selection. After the color is selected 
+He needs to click on his group's color and only then can he continue. When the color is selected 
+one is added to the active teams color array on the server (POST).
+The team color of the player cannot be changed after selection. After the color is selected 
 the page switches to mode two.
 
 #### Mode two
@@ -76,7 +77,7 @@ The screen changes and instead of choosing colors, the game board appears.
 The game page combines several different graphical elements.
 
 #### Page background:
-The background of the page changes depending on the team whose turn it is to play.
+The background of the page changes depending on the team whose turn it is to play. This will be fetched (GET) from the server each second
 
 #### The game board:
 The game board appears relatively in the middle.
@@ -88,26 +89,31 @@ The game board remains in place and does not change throughout the game.
 - There are up to six pawns depending on the number of teams, each having its own color.
 Each pawn is initially located on the first circle of the board and is played by one team.
 The pawns move forward accross board circles during the game according to the progress of the team.
+The pawns positions is fetched from the server (GET) each second.
 
 #### The cards:
 Next to the game board there are playing cards. 
 Each card has a list of words numbered from 1 to 8. 
 The top card is facedown for all players except the player that is currently the one saying aliases out loud.
+When a card becomes face up, it is fetched from the server (GET). This happnes when either of the next section buttons is clicked.
 
 #### Buttons elements:
 Near the deck of cards are three buttons.
 - **Start button:** One of the players whose team is taking turns to play should press the button.
 The button starts the a timer for the player's turn.
-- **+ / - Buttons:** Two buttons that are adjacent to each other.
+- **+ / - Buttons:** Two buttons that are adjacent to each other
 According to the rules of the game, the selected player must mark whether or not his team succeeded in the card.
 The right button indicates that it succeeded and the left one indicates that it did not.
 
 #### Score
-Starts with zero at the begining of the turn. Incremented when + button is pressed. Descremented when - button is pressed
+Starts with zero at the begining of the turn. Incremented when + button is pressed. Descremented when - button is pressed. Score is only stored on the client.
+It is short lived and is relevant only during the turn. When the timer (from the server) reaches 0, the Position of the current team (on the server) is advanced by score.
+In the same turn the score of several teams can be positive and will increase the Position of each teams pawn (POST)
 
 ## Another elements:
-- **Some shape** painted in the color of the group the user has chosen.
-- **Timer** that measures one minute from the moment the button is pressed. Located right above the button that activates it.
+- **Some shape** painted in the color of the team the user has chosen. It is not stored on the server.
+- **Timer** that measures one minute from the moment the button is pressed. Located right above the button that activates it. 
+The timer is started on the server (POST) and the remaining time is visible by each client (GET)
 ---
 
 ## Behaviour That Applies to Every Page
@@ -131,10 +137,13 @@ Each page has an identical footer at the bottom that credits the technologies us
 
 ## Data and State
 The server will hold the current game state in memory:
-- Active teams colors: An array of strings of length 6
-- Position of pawns: An array of length 6 where each value is a number between 1 and 71 (the number of circles on the board that the pawn on heam).
+- Turn: an integer from 1 to 6 indicating who's team turn it is. e.g. 3 == yellow
+- Teams: Active teams colors: An array of integers with size 6. Each position corresponds to a fixed color. e.g. Teams[0] == 2 means there are two 
+players in the red team. Position 0 is reserved for red.
+- Positions of pawns: An array of length 6 where each value is a number between 1 and 71 (the number of circles on the board that the pawn on heam). Each array 
+index is reserved for a specific color which matches the same color in Teams. e.g. Teams[1] and Position[1] are reserved for green
 - Initially all cards: An array of strings on length 6, Can include places without value.
-
+- Timer: an integer between 0 and 60 indicating how much time is left for the current turn. 0 indicates no one is currently playing.
 ## User Interactions
 Users interact via clicking buttons to choose colors, starting the timer, and reporting success/failure of words.
 All interactions send fetch requests to the API.
